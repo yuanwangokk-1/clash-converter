@@ -26,7 +26,8 @@
 ## 使用方法
 
  在线使用
-直接访问：`https://yuanwangokk-1.github.io/clash-converter/`
+直接访问：```json
+https://yuanwangokk-1.github.io/clash-converter/```
 
  本地使用
 1. 克隆仓库
