@@ -33,5 +33,6 @@ https://yuanwangokk-1.github.io/clash-converter/
 
  本地使用
 1. 克隆仓库
-   ```bash
+```bash
    git clone https://github.com/[你的用户名]/clash-converter.git
+```
