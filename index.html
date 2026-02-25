@@ -3,229 +3,434 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>订阅转换工具 · 优化整合版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Clash订阅转换 · 全规则整合专业版</title>
     <style>
-        /* ========== 样式部分：保留你的炫彩背景与高级布局 ========== */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; }
-        body { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .container { width: 100%; max-width: 1100px; background-color: rgba(255, 255, 255, 0.95); border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); overflow: hidden; }
-        .header { background: linear-gradient(to right, #4a00e0, #8e2de2); color: white; padding: 20px; text-align: center; }
-        .header h1 { font-size: 24px; margin-bottom: 5px; }
-        .content { padding: 25px; }
-        .tab-container { display: flex; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
-        .tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; font-weight: 600; }
-        .tab.active { border-bottom-color: #8e2de2; color: #8e2de2; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
-        input, textarea, select { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; transition: all 0.3s; }
-        input:focus, select:focus { border-color: #8e2de2; box-shadow: 0 0 0 2px rgba(142, 45, 226, 0.2); outline: none; }
-        .config-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 10px; }
-        .config-option { display: flex; align-items: center; }
-        .config-option input { width: auto; margin-right: 8px; }
-        .button-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        button { padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; min-width: 120px; color: white; }
-        .convert-btn { background: linear-gradient(to right, #4a00e0, #8e2de2); }
-        .copy-btn { background: linear-gradient(to right, #00b09b, #96c93d); }
-        .clear-btn { background: linear-gradient(to right, #ff416c, #ff4b2b); }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .result-group textarea { background: #f8f9fa; color: #333; height: 120px; }
-        .log-content { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; height: 150px; overflow-y: auto; font-family: monospace; font-size: 14px; }
-        .log-entry.success { color: #28a745; }
-        .log-entry.error { color: #dc3545; }
-        .toast { position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 8px; color: white; transform: translateX(120%); transition: transform 0.3s; z-index: 1000; }
-        .toast.show { transform: translateX(0); }
-        .batch-results { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
-        .batch-item { padding: 10px; border: 1px solid #eee; border-radius: 8px; background: #fff; }
+        /* ========== 基础样式与布局 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background-color: rgba(255, 255, 255, 0.98);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            opacity: 0.85;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 25px;
+        }
+
+        /* ========== 标签页系统 ========== */
+        .tab-container {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            padding: 12px 25px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: #8e2de2;
+            border-bottom-color: #8e2de2;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== 表单元素 ========== */
+        .input-group {
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            background: #fff;
+            transition: all 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #8e2de2;
+            box-shadow: 0 0 0 3px rgba(142, 45, 226, 0.15);
+        }
+
+        /* ========== 移动端模板选择器核心美化 ========== */
+        #configTemplate {
+            height: 300px;
+            /* PC端保持高度 */
+            scrollbar-width: thin;
+            scrollbar-color: #8e2de2 #f0f0f0;
+        }
+
+        /* 针对手机端的媒体查询优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            #configTemplate {
+                height: 260px !important;
+                padding: 5px;
+                border: 2px solid #eee;
+                background: #fafafa;
+            }
+
+            #configTemplate option {
+                padding: 15px 12px;
+                /* 更大的触控面积 */
+                margin-bottom: 6px;
+                border-radius: 8px;
+                background: #fff;
+                border: 1px solid #eee;
+                font-size: 14px;
+                white-space: normal;
+                word-break: break-all;
+            }
+
+            #configTemplate option:checked {
+                background: linear-gradient(to right, #4a00e0, #8e2de2) !important;
+                color: white !important;
+                box-shadow: 0 4px 10px rgba(74, 0, 224, 0.2);
+            }
+
+            .button-group button {
+                width: 100%;
+                /* 移动端按钮全宽 */
+                margin-bottom: 10px;
+            }
+        }
+
+        /* ========== 按钮样式 ========== */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .convert-btn {
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
+        }
+
+        .copy-btn {
+            background: linear-gradient(to right, #00b09b, #96c93d);
+        }
+
+        .clear-btn {
+            background: #ff4b2b;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* ========== 日志与结果区 ========== */
+        .log-content {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 10px;
+            height: 160px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .log-entry.success {
+            color: #4ec9b0;
+        }
+
+        .log-entry.error {
+            color: #f48771;
+        }
+
+        .log-entry.info {
+            color: #9cdcfe;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            border-radius: 50px;
+            z-index: 1000;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <div class="header">
-            <h1>订阅转换工具 · 全规则整合版</h1>
-            <p>支持 Sing-box 与 Clash 模板切换 / 自动化参数构建</p>
+            <h1>Clash订阅转换 · 专业版</h1>
+            <p>基于 ACL4SSR 规则库 · 适配移动端交互</p>
         </div>
 
         <div class="content">
             <div class="tab-container">
-                <div class="tab active" onclick="switchTab('single')">单链接转换</div>
+                <div class="tab active" onclick="switchTab('single')">单链接</div>
                 <div class="tab" onclick="switchTab('batch')">批量转换</div>
                 <div class="tab" onclick="switchTab('config')">配置管理</div>
             </div>
 
             <div id="single-tab" class="tab-content active">
                 <div class="input-group">
-                    <label>原始订阅链接</label>
-                    <input type="text" id="originalUrl" placeholder="粘贴你的订阅地址...">
-                </div>
-                <div class="input-group">
-                    <label>转换参数</label>
-                    <div class="config-options">
-                        <div class="config-option"><input type="checkbox" id="emoji" checked><label for="emoji">Emoji</label></div>
-                        <div class="config-option"><input type="checkbox" id="udp" checked><label for="udp">UDP</label></div>
-                        <div class="config-option"><input type="checkbox" id="tfo"><label for="tfo">TFO</label></div>
-                        <div class="config-option"><input type="checkbox" id="scv"><label for="scv">跳过证书验证</label></div>
-                    </div>
+                    <label>订阅链接</label>
+                    <input type="text" id="originalUrl" placeholder="粘贴您的原始订阅地址...">
                 </div>
                 <div class="button-group">
-                    <button class="convert-btn" onclick="handleConvert()">转换链接</button>
-                    <button class="copy-btn" onclick="handleCopy('convertedUrl')">复制结果</button>
-                    <button class="clear-btn" onclick="handleClear('single')">清空</button>
+                    <button class="convert-btn" id="convertBtn">立即转换</button>
+                    <button class="copy-btn" id="copyBtn">复制结果</button>
+                    <button class="clear-btn" id="clearBtn">清空</button>
                 </div>
-                <div class="result-group">
-                    <textarea id="convertedUrl" readonly placeholder="转换后的链接将显示在这里..."></textarea>
+                <div class="input-group">
+                    <label>转换结果</label>
+                    <textarea id="convertedUrl" readonly rows="4" placeholder="转换后的地址将出现在这里..."></textarea>
                 </div>
             </div>
 
             <div id="batch-tab" class="tab-content">
                 <div class="input-group">
-                    <label>批量链接（每行一个）</label>
-                    <textarea id="batchUrls" style="height: 150px;"></textarea>
+                    <label>批量链接 (每行一个)</label>
+                    <textarea id="batchUrls" rows="6" placeholder="https://...&#10;https://..."></textarea>
                 </div>
                 <div class="button-group">
-                    <button class="convert-btn" onclick="handleBatchConvert()">开始批量转换</button>
-                    <button class="clear-btn" onclick="handleClear('batch')">清空结果</button>
+                    <button class="convert-btn" id="batchConvertBtn">批量生成</button>
+                    <button class="clear-btn" id="batchClearBtn">重置</button>
                 </div>
-                <div id="batchResults" class="batch-results"></div>
             </div>
 
             <div id="config-tab" class="tab-content">
                 <div class="input-group">
-                    <label>选择配置模板</label>
-                    <select id="configTemplate">
-                        <optgroup label="Sing-box 模板">
-                            <option value="https://raw.githubusercontent.com/yuanwangokk-1/subscribe/refs/heads/main/rule/config_template/sb-config-1.12.json">sb-config-1.12.json (推荐)</option>
-                            <option value="https://raw.githubusercontent.com/Toperlock/sing-box-subscribe/raw/main/config_template/config_template_groups_rule_set_tun.json">Sing-box TUN 模板</option>
-                        </optgroup>
-                        <optgroup label="Clash ACL4SSR 模板">
-                            <option value="https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini">ACL4SSR 完整版</option>
-                            <option value="https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini">ACL4SSR 极简版</option>
-                        </optgroup>
+                    <label>选择规则模板 (ACL4SSR)</label>
+                    <select id="configTemplate" size="8">
+                        <option value="ACL4SSR_Online" selected>🌈 默认 - ACL4SSR Online (推荐)</option>
+                        <option value="ACL4SSR_Online_Full">📦 完整版 - Full (无广告)</option>
+                        <option value="ACL4SSR_Online_Mini">🔰 精简版 - Mini</option>
+                        <option value="ACL4SSR_Online_Full_Netflix">🎬 Netflix 专版</option>
+                        <option value="ACL4SSR_Online_Full_Google">🔎 Google 专版</option>
+                        <option value="ACL4SSR_Online_Full_AI">🤖 AI / ChatGPT 专版</option>
+                        <option value="custom">⚙️ 自定义配置 URL</option>
                     </select>
                 </div>
-                <div class="input-group">
-                    <label>转换后端地址</label>
-                    <input type="text" id="backendUrl" value="https://url.v1.mk/sub?target=clash&url=">
-                    <small style="color: #666;">提示：如果是 Sing-box，请确保后端支持该目标格式。</small>
+                <div class="input-group" id="customConfigGroup" style="display:none;">
+                    <label>自定义配置地址</label>
+                    <input type="text" id="customConfigUrl" placeholder="https://raw.../config.ini">
                 </div>
             </div>
 
-            <div class="log-group" style="margin-top: 20px;">
+            <div class="log-group">
                 <label>操作日志</label>
-                <div class="log-content" id="logContent"></div>
+                <div class="log-content" id="logContent">
+                    <div class="log-entry info">系统就绪，等待输入...</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="toast"></div>
+    <div class="toast" id="toast">已复制到剪贴板</div>
 
     <script>
-        // 状态管理
+        // 配置常量
+        const BASE_API = 'https://url.v1.mk/sub?target=clash&url=';
+        const TEMPLATES = {
+            'ACL4SSR_Online': 'https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online.ini',
+            'ACL4SSR_Online_Full': 'https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online_Full.ini',
+            'ACL4SSR_Online_Mini': 'https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online_Mini.ini',
+            'ACL4SSR_Online_Full_Netflix': 'https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online_Full_Netflix.ini',
+            'ACL4SSR_Online_Full_Google': 'https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online_Full_Google.ini',
+            'ACL4SSR_Online_Full_AI': 'https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online_Full_AI.ini'
+        };
+
+        // 核心逻辑
+        function addLog(msg, type = 'info') {
+            const logBox = document.getElementById('logContent');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2000);
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById(tabId + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+            addLog(`切换到${event.target.textContent}面板`);
         }
 
-        function addLog(msg, type = 'info') {
-            const log = document.getElementById('logContent');
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-            log.appendChild(entry);
-            log.scrollTop = log.scrollHeight;
+        // 转换生成
+        function generateUrl(rawUrl) {
+            const templateKey = document.getElementById('configTemplate').value;
+            let configPart = '';
+
+            if (templateKey === 'custom') {
+                const customUrl = document.getElementById('customConfigUrl').value.trim();
+                configPart = `&config=${encodeURIComponent(customUrl)}`;
+            } else {
+                configPart = `&config=${TEMPLATES[templateKey]}`;
+            }
+
+            return `${BASE_API}${encodeURIComponent(rawUrl)}${configPart}&emoji=true&list=false&udp=true`;
         }
 
-        function showToast(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.style.background = isError ? '#ff4b2b' : '#00b09b';
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-
-        // 核心：构建 URL
-        function buildUrl(inputUrl) {
-            const backend = document.getElementById('backendUrl').value;
-            const template = document.getElementById('configTemplate').value;
-            
-            // 构建参数对象，避免冗余
-            const params = {
-                config: template,
-                emoji: document.getElementById('emoji').checked,
-                udp: document.getElementById('udp').checked,
-                tfo: document.getElementById('tfo').checked,
-                scv: document.getElementById('scv').checked,
-                expand: true,
-                new_name: true
-            };
-
-            const queryStr = Object.keys(params)
-                .map(key => `${key}=${encodeURIComponent(params[key])}`)
-                .join('&');
-
-            return `${backend}${encodeURIComponent(inputUrl)}&${queryStr}`;
-        }
-
-        // 单链接处理
-        function handleConvert() {
+        // 事件监听
+        document.getElementById('convertBtn').onclick = () => {
             const input = document.getElementById('originalUrl').value.trim();
-            if (!input) return showToast('请输入链接', true);
-            
-            const result = buildUrl(input);
+            if (!input) return addLog('请输入订阅地址', 'error');
+
+            const result = generateUrl(input);
             document.getElementById('convertedUrl').value = result;
             addLog('链接转换成功', 'success');
-            showToast('转换成功');
-        }
+        };
 
-        // 批量处理
-        async function handleBatchConvert() {
-            const area = document.getElementById('batchUrls');
-            const urls = area.value.split('\n').filter(u => u.trim() !== '');
-            const container = document.getElementById('batchResults');
-            container.innerHTML = '';
+        document.getElementById('copyBtn').onclick = () => {
+            const res = document.getElementById('convertedUrl');
+            res.select();
+            document.execCommand('copy');
+            showToast('已复制结果');
+            addLog('内容已复制到剪贴板');
+        };
 
-            if (urls.length === 0) return showToast('请输入链接列表', true);
+        document.getElementById('clearBtn').onclick = () => {
+            document.getElementById('originalUrl').value = '';
+            document.getElementById('convertedUrl').value = '';
+            addLog('单链接数据已清空');
+        };
 
-            urls.forEach((u, index) => {
-                const res = buildUrl(u.trim());
-                const div = document.createElement('div');
-                div.className = 'batch-item';
-                div.innerHTML = `
-                    <div style="font-size:12px; color:#666; margin-bottom:5px;">#${index+1} 原始链接短描述...</div>
-                    <textarea readonly style="height:60px; font-size:12px;">${res}</textarea>
-                `;
-                container.appendChild(div);
-            });
-            addLog(`批量转换完成：${urls.length}条`, 'success');
-        }
+        // 模板选择自动处理
+        document.getElementById('configTemplate').onchange = (e) => {
+            const isCustom = e.target.value === 'custom';
+            document.getElementById('customConfigGroup').style.display = isCustom ? 'block' : 'none';
 
-        function handleClear(type) {
-            if (type === 'single') {
-                document.getElementById('originalUrl').value = '';
-                document.getElementById('convertedUrl').value = '';
-            } else {
-                document.getElementById('batchUrls').value = '';
-                document.getElementById('batchResults').innerHTML = '';
+            if (window.innerWidth <= 768) {
+                showToast(`已选: ${e.target.options[e.target.selectedIndex].text}`);
             }
-            addLog('内容已清空');
-        }
-
-        async function handleCopy(id) {
-            const text = document.getElementById(id).value;
-            if (!text) return;
-            try {
-                await navigator.clipboard.writeText(text);
-                showToast('已复制到剪贴板');
-            } catch (e) {
-                showToast('复制失败，请手动选定', true);
-            }
-        }
+        };
     </script>
 </body>
+
 </html>
