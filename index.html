@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级订阅转换工具</title>
+    <style>
+        /* 保持之前的样式并略微优化 */
+        :root { --primary-color: #4a90e2; --bg-color: #f0f2f5; }
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg-color); display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); width: 100%; max-width: 600px; }
+        h2 { text-align: center; color: #1a1a1a; margin-top: 0; }
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; margin-bottom: 0.6rem; font-weight: 600; color: #444; font-size: 14px; }
+        input[type="text"], select { width: 100%; padding: 12px; border: 1px solid #dcdfe6; border-radius: 8px; box-sizing: border-box; outline: none; transition: border 0.3s; }
+        input:focus, select:focus { border-color: var(--primary-color); }
+        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 1.5rem; }
+        .checkbox-item { display: flex; align-items: center; font-size: 13px; color: #666; cursor: pointer; }
+        .checkbox-item input { margin-right: 8px; }
+        button { width: 100%; padding: 14px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background: #357abd; opacity: 0.9; }
+        #result-container { margin-top: 20px; padding: 15px; background: #eef5ff; border-radius: 8px; display: none; border: 1px solid #d0e3ff; }
+        #result-url { word-break: break-all; font-family: monospace; font-size: 12px; color: #333; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>订阅转换 - 全配置增强版</h2>
+    
+    <div class="form-group">
+        <label>订阅链接 (支持多条，每行一个)</label>
+        <input type="text" id="rawUrl" placeholder="https://example.com/sub/...">
+    </div>
+
+    <div class="form-group">
+        <label>生成类型</label>
+        <select id="target">
+            <option value="clash">Clash (推荐)</option>
+            <option value="shadowrocket">Shadowrocket</option>
+            <option value="v2ray">V2Ray</option>
+            <option value="surge">Surge</option>
+            <option value="quanx">Quantumult X</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>远程配置 (ACL4SSR 全家桶)</label>
+        <select id="configList"></select>
+    </div>
+
+    <div class="checkbox-group">
+        <div class="checkbox-item"><input type="checkbox" id="emoji" checked> <label for="emoji">包含 Emoji</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="udp" checked> <label for="udp">启用 UDP</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="tfo"> <label for="tfo">启用 TFO</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="scv"> <label for="scv">跳过证书验证</label></div>
+    </div>
+
+    <button onclick="generateUrl()">立即生成转换链接</button>
+
+    <div id="result-container">
+        <label>生成结果：</label>
+        <div id="result-url"></div>
+        <button style="background: #28a745;" onclick="copyUrl()">复制订阅地址</button>
+    </div>
+</div>
+
+<script>
+    // 定义配置列表数据
+    const remoteConfigs = [
+        { name: "ACL4SSR_Online_Full (全分组, 包含自动测速)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+        { name: "ACL4SSR_Online_Full_NoAuto (全分组, 无自动测速)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+        { name: "ACL4SSR_Online_Full_AdblockPlus (全分组, 强力去广告)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+        { name: "ACL4SSR_Online_Mini (精简版)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+        { name: "ACL4SSR_Online_Mini_MultiMode (精简版, 多模式)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+        { name: "ACL4SSR_Online_Full_Google (谷歌版)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+        { name: "ACL4SSR_Online_MultiCountry (多国分组)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" }
+    ];
+
+    // 页面加载时自动填充配置
+    const configSelect = document.getElementById('configList');
+    remoteConfigs.forEach(cfg => {
+        let opt = document.createElement('option');
+        opt.value = cfg.url;
+        opt.innerHTML = cfg.name;
+        configSelect.appendChild(opt);
+    });
+
+    function generateUrl() {
+        const rawUrl = document.getElementById('rawUrl').value.trim();
+        if (!rawUrl) return alert("请输入订阅地址");
+
+        const baseUrl = "https://api.v1.mk/sub?";
+        const params = new URLSearchParams({
+            target: document.getElementById('target').value,
+            url: rawUrl,
+            insert: "false",
+            config: configSelect.value,
+            emoji: document.getElementById('emoji').checked,
+            list: "false",
+            udp: document.getElementById('udp').checked,
+            tfo: document.getElementById('tfo').checked,
+            scv: document.getElementById('scv').checked,
+            new_name: "true"
+        });
+
+        document.getElementById('result-url').innerText = baseUrl + params.toString();
+        document.getElementById('result-container').style.display = 'block';
+    }
+
+    function copyUrl() {
+        const text = document.getElementById('result-url').innerText;
+        navigator.clipboard.writeText(text).then(() => alert("复制成功！"));
+    }
+</script>
+
+</body>
+</html>
