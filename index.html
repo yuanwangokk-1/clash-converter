@@ -1,5 +1,6 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,96 +24,71 @@
         #result-url { word-break: break-all; font-family: monospace; font-size: 12px; color: #333; margin-bottom: 10px; }
     </style>
 </head>
+
 <body>
-
-<div class="container">
-    <h2>订阅转换 - 全配置增强版</h2>
-    
-    <div class="form-group">
-        <label>订阅链接 (支持多条，每行一个)</label>
-        <input type="text" id="rawUrl" placeholder="https://example.com/sub/...">
+    <div class="container">
+        <h2>订阅转换 - 全配置增强版</h2>
+        <div class="form-group"><label>订阅链接 (支持多条，每行一个)</label><input type="text" id="rawUrl" placeholder="https://example.com/sub/..."></div>
+        <div class="form-group"><label>生成类型</label><select id="target">
+                <option value="clash">Clash (推荐)</option>
+                <option value="shadowrocket">Shadowrocket</option>
+                <option value="v2ray">V2Ray</option>
+                <option value="surge">Surge</option>
+                <option value="quanx">Quantumult X</option>
+            </select></div>
+        <div class="form-group"><label>远程配置 (ACL4SSR 全家桶)</label><select id="configList"></select></div>
+        <div class="checkbox-group">
+            <div class="checkbox-item"><input type="checkbox" id="emoji" checked><label for="emoji">包含 Emoji</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="udp" checked><label for="udp">启用 UDP</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="tfo" checked><label for="tfo">启用 TFO</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="scv" checked><label for="scv">跳过证书验证</label></div>
+        </div><button onclick="generateUrl()">立即生成转换链接</button>
+        <div id="result-container"><label>生成结果：</label>
+            <div id="result-url"></div><button style="background: #28a745;" onclick="copyUrl()">复制订阅地址</button>
+        </div>
     </div>
-
-    <div class="form-group">
-        <label>生成类型</label>
-        <select id="target">
-            <option value="clash">Clash (推荐)</option>
-            <option value="shadowrocket">Shadowrocket</option>
-            <option value="v2ray">V2Ray</option>
-            <option value="surge">Surge</option>
-            <option value="quanx">Quantumult X</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>远程配置 (ACL4SSR 全家桶)</label>
-        <select id="configList"></select>
-    </div>
-
-    <div class="checkbox-group">
-        <div class="checkbox-item"><input type="checkbox" id="emoji" checked> <label for="emoji">包含 Emoji</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="udp" checked> <label for="udp">启用 UDP</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="tfo"> <label for="tfo">启用 TFO</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="scv"> <label for="scv">跳过证书验证</label></div>
-    </div>
-
-    <button onclick="generateUrl()">立即生成转换链接</button>
-
-    <div id="result-container">
-        <label>生成结果：</label>
-        <div id="result-url"></div>
-        <button style="background: #28a745;" onclick="copyUrl()">复制订阅地址</button>
-    </div>
-</div>
-
-<script>
-    // 定义配置列表数据
-    const remoteConfigs = [
-        { name: "ACL4SSR_Online_Full (全分组, 包含自动测速)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
-        { name: "ACL4SSR_Online_Full_NoAuto (全分组, 无自动测速)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
-        { name: "ACL4SSR_Online_Full_AdblockPlus (全分组, 强力去广告)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
-        { name: "ACL4SSR_Online_Mini (精简版)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
-        { name: "ACL4SSR_Online_Mini_MultiMode (精简版, 多模式)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
-        { name: "ACL4SSR_Online_Full_Google (谷歌版)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
-        { name: "ACL4SSR_Online_MultiCountry (多国分组)", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" }
-    ];
-
-    // 页面加载时自动填充配置
-    const configSelect = document.getElementById('configList');
-    remoteConfigs.forEach(cfg => {
-        let opt = document.createElement('option');
-        opt.value = cfg.url;
-        opt.innerHTML = cfg.name;
-        configSelect.appendChild(opt);
-    });
-
-    function generateUrl() {
-        const rawUrl = document.getElementById('rawUrl').value.trim();
-        if (!rawUrl) return alert("请输入订阅地址");
-
-        const baseUrl = "https://api.v1.mk/sub?";
-        const params = new URLSearchParams({
-            target: document.getElementById('target').value,
-            url: rawUrl,
-            insert: "false",
-            config: configSelect.value,
-            emoji: document.getElementById('emoji').checked,
-            list: "false",
-            udp: document.getElementById('udp').checked,
-            tfo: document.getElementById('tfo').checked,
-            scv: document.getElementById('scv').checked,
-            new_name: "true"
+    <script>
+        // 定义配置列表数据
+        const remoteConfigs = [
+        { name: "ACL4SSR.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },{ name: "ACL4SSR_AdblockPlus.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },{ name: "ACL4SSR_BackCN.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },{ name: "ACL4SSR_Mini.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },{ name: "ACL4SSR_Mini_Fallback.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },{ name: "ACL4SSR_Mini_MultiMode.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },{ name: "ACL4SSR_Mini_NoAuto.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },{ name: "ACL4SSR_NoApple.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },{ name: "ACL4SSR_NoAuto.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },{ name: "ACL4SSR_NoAuto_NoApple.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },{ name: "ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },{ name: "ACL4SSR_NoMicrosoft.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },{ name: "ACL4SSR_Online.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },{ name: "ACL4SSR_Online_AdblockPlus.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },{ name: "ACL4SSR_Online_Full.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },{ name: "ACL4SSR_Online_Full_AdblockPlus.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },{ name: "ACL4SSR_Online_Full_Google.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },{ name: "ACL4SSR_Online_Full_MultiMode.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },{ name: "ACL4SSR_Online_Full_Netflix.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },{ name: "ACL4SSR_Online_Full_NoAuto.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },{ name: "ACL4SSR_Online_Mini.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },{ name: "ACL4SSR_Online_Mini_AdblockPlus.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },{ name: "ACL4SSR_Online_Mini_Ai.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },{ name: "ACL4SSR_Online_Mini_Fallback.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },{ name: "ACL4SSR_Online_Mini_MultiCountry.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },{ name: "ACL4SSR_Online_Mini_MultiMode.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },{ name: "ACL4SSR_Online_Mini_NoAuto.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },{ name: "ACL4SSR_Online_MultiCountry.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },{ name: "ACL4SSR_Online_NoAuto.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },{ name: "ACL4SSR_Online_NoReject.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },{ name: "ACL4SSR_WithChinaIp.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },{ name: "ACL4SSR_WithChinaIp_WithGFW.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },{ name: "ACL4SSR_WithGFW.ini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" }
+        ];
+        
+        // 页面加载时自动填充配置
+        const configSelect = document.getElementById('configList');
+        remoteConfigs.forEach(cfg => {
+            let opt = document.createElement('option');
+            opt.value = cfg.url;
+            opt.innerHTML = cfg.name;
+            configSelect.appendChild(opt);
         });
-
-        document.getElementById('result-url').innerText = baseUrl + params.toString();
-        document.getElementById('result-container').style.display = 'block';
-    }
-
-    function copyUrl() {
-        const text = document.getElementById('result-url').innerText;
-        navigator.clipboard.writeText(text).then(() => alert("复制成功！"));
-    }
-</script>
-
+        
+        function generateUrl() {
+            const rawUrl = document.getElementById('rawUrl').value.trim();
+            if (!rawUrl) return alert("请输入订阅地址");
+        
+            const baseUrl = "https://api.v1.mk/sub?";
+            const params = new URLSearchParams({
+                target: document.getElementById('target').value,
+                url: rawUrl,
+                insert: "false",
+                config: configSelect.value,
+                emoji: document.getElementById('emoji').checked,
+                list: "false",
+                udp: document.getElementById('udp').checked,
+                tfo: document.getElementById('tfo').checked,
+                scv: document.getElementById('scv').checked,
+                new_name: "true"
+            });
+        
+            document.getElementById('result-url').innerText = baseUrl + params.toString();
+            document.getElementById('result-container').style.display = 'block';
+        }
+        
+        function copyUrl() {
+            const text = document.getElementById('result-url').innerText;
+            navigator.clipboard.writeText(text).then(() => alert("复制成功！"));
+        }
+    </script>
 </body>
+
 </html>
