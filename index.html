@@ -1,93 +1,747 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高级订阅转换工具</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aries订阅转换</title>
     <style>
-        /* 保持之前的样式并略微优化 */
-        :root { --primary-color: #4a90e2; --bg-color: #f0f2f5; }
-        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg-color); display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); width: 100%; max-width: 600px; }
-        h2 { text-align: center; color: #1a1a1a; margin-top: 0; }
-        .form-group { margin-bottom: 1.2rem; }
-        label { display: block; margin-bottom: 0.6rem; font-weight: 600; color: #444; font-size: 14px; }
-        input[type="text"], select { width: 100%; padding: 12px; border: 1px solid #dcdfe6; border-radius: 8px; box-sizing: border-box; outline: none; transition: border 0.3s; }
-        input:focus, select:focus { border-color: var(--primary-color); }
-        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 1.5rem; }
-        .checkbox-item { display: flex; align-items: center; font-size: 13px; color: #666; cursor: pointer; }
-        .checkbox-item input { margin-right: 8px; }
-        button { width: 100%; padding: 14px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background: #357abd; opacity: 0.9; }
-        #result-container { margin-top: 20px; padding: 15px; background: #eef5ff; border-radius: 8px; display: none; border: 1px solid #d0e3ff; }
-        #result-url { word-break: break-all; font-family: monospace; font-size: 12px; color: #333; margin-bottom: 10px; }
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #333;
+            --accent-color: #4a6cf7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+            padding: 15px;
+        }
+
+        .background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+        }
+
+        .background-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            z-index: -1;
+        }
+
+        .marquee-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            padding: 8px 0;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .marquee {
+            white-space: nowrap;
+            display: inline-block;
+            animation: marquee 22s linear infinite;
+            padding-left: 100%;
+        }
+
+        .marquee a {
+            color: var(--text-primary);
+            font-weight: bold;
+            text-decoration: none;
+            padding: 0 30px;
+            font-size: 15px;
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            margin: 0 5px;
+            transition: background 0.2s;
+        }
+
+        .marquee a:hover {
+            background: rgba(74, 108, 247, 0.2);
+            text-decoration: underline;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .main-layer {
+            width: 100%;
+            max-width: 520px;
+            margin-top: 50px;
+        }
+
+        .avatar-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0 20px 0;
+        }
+
+        .avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(2px);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .avatar:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-color);
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 30px;
+            font-weight: 800;
+            background: linear-gradient(45deg, #4a6cf7, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #444;
+        }
+
+        textarea,
+        select,
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .compact-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .compact-row .input-group {
+            flex: 1;
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(74, 108, 247, 0.3);
+        }
+
+        .result-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(74, 108, 247, 0.05);
+            border-radius: 8px;
+            border: 1px dashed var(--accent-color);
+            word-break: break-all;
+        }
+
+        .result-link {
+            font-size: 12px;
+            color: var(--accent-color);
+            font-family: monospace;
+        }
+
+        .music-player {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+        }
+
+        .music-toggle {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid var(--glass-border);
+            font-size: 20px;
+            transition: background 0.2s;
+        }
+
+        .music-toggle.playing {
+            animation: spin 4s linear infinite;
+            background: rgba(74, 108, 247, 0.3);
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .music-hint {
+            position: fixed;
+            bottom: 75px;
+            right: 25px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(4px);
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            color: #444;
+            pointer-events: none;
+        }
+
+        .note-text {
+            font-size: 11px;
+            color: #777;
+            margin-top: 2px;
+        }
     </style>
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?77116c70371cef106dd6cc3a41e5985a";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
 </head>
 
 <body>
-    <div class="container">
-        <h2>订阅转换 - 全配置增强版</h2>
-        <div class="form-group"><label>订阅链接 (支持多条，每行一个)</label><input type="text" id="rawUrl" placeholder="https://example.com/sub/..."></div>
-        <div class="form-group"><label>生成类型</label><select id="target">
-                <option value="clash">Clash (推荐)</option>
-                <option value="shadowrocket">Shadowrocket</option>
-                <option value="v2ray">V2Ray</option>
-                <option value="surge">Surge</option>
-                <option value="quanx">Quantumult X</option>
-            </select></div>
-        <div class="form-group"><label>远程配置 (ACL4SSR 全家桶)</label><select id="configList"></select></div>
-        <div class="checkbox-group">
-            <div class="checkbox-item"><input type="checkbox" id="emoji" checked><label for="emoji">包含 Emoji</label></div>
-            <div class="checkbox-item"><input type="checkbox" id="udp" checked><label for="udp">启用 UDP</label></div>
-            <div class="checkbox-item"><input type="checkbox" id="tfo" checked><label for="tfo">启用 TFO</label></div>
-            <div class="checkbox-item"><input type="checkbox" id="scv" checked><label for="scv">跳过证书验证</label></div>
-        </div><button onclick="generateUrl()">立即生成转换链接</button>
-        <div id="result-container"><label>生成结果：</label>
-            <div id="result-url"></div><button style="background: #28a745;" onclick="copyUrl()">复制订阅地址</button>
+    <div class="background-layer">
+        <video class="background-video" autoplay muted loop playsinline>
+            <source
+                src="https://txmov2.a.kwimgs.com/upic/2023/10/13/16/BMjAyMzEwMTMxNjU4MTJfMTcyNTc4NzU4N18xMTQ4OTQ2OTgxMzRfMl8z_b_B209e890a596d64fbd174507b758b0815.mp4"
+                type="video/mp4">
+        </video>
+        <div class="background-overlay"></div>
+    </div>
+
+    <div class="marquee-container">
+        <div class="marquee">
+            <a href="https://www.people.com.cn/" target="_blank" rel="noopener noreferrer">
+                🔥 人民网深刻领悟“两个确立”的决定性意义，增强“四个意识”、坚定“四个自信”、做到“两个维护”
+            </a>
+            <a href="https://www.qstheory.cn/" target="_blank" rel="noopener noreferrer">
+                🔥 求是网传媒（北京）有限公司版权所有，未经书面授权禁止使用
+            </a>
         </div>
     </div>
+
+    <div class="main-layer">
+        <div class="page-title">Aries订阅转换</div>
+
+        <div class="avatar-wrapper">
+            <img src="https://mpimg.cn/view.php/a0486e9acbd16e5ecd18af7ebc5bf276.webp" alt="Aries头像" class="avatar"
+                onerror="this.onerror=null; this.src='https://via.placeholder.com/70x70?text=Ku'">
+        </div>
+
+        <div class="glass-card">
+            <div class="input-group">
+                <label>订阅链接 (支持多行混合)</label>
+                <textarea id="sub-filepath" placeholder="粘贴订阅地址，多条自动合并..."></textarea>
+            </div>
+
+            <div class="compact-row">
+                <div class="input-group">
+                    <label>生成类型</label>
+                    <select id="sub-options">
+                        <option value="clash">Clash-Meta</option>
+                        <option value="singbox">Sing-box </option>
+                        <option value="quanx">Quantumult X</option>
+                        <option value="loon">Loon</option>
+                        <option value="surge&ver=4">Surge 4</option>
+                        <option value="surfboard">Surfboard</option>
+                        <option value="v2ray">V2Ray</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>转换后端</label>
+                    <select id="sub-backend">
+                        <option value="https://api.v1.mk/sub?">肥羊后端</option>
+                        <option value="custom">自定义后端</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group hidden" id="custom-backend-group">
+                <label>自定义后端地址</label>
+                <input type="text" id="custom-backend" placeholder="https://api.xxx.com/sub?">
+            </div>
+
+            <div class="input-group">
+                <label>⚙️ 分流规则 / 配置预设</label>
+                <select id="sub-config"></select>
+                <div class="note-text">内置主流规则，Singbox/Clash等已补全</div>
+            </div>
+
+            <div class="input-group hidden" id="custom-config-group">
+                <label>自定义远程配置链接 (ini/json)</label>
+                <input type="text" id="custom-config" placeholder="https://example.com/config.ini">
+            </div>
+
+            <button class="btn" id="sub-generate">生成转换链接并复制</button>
+
+            <div class="result-container hidden" id="result-container">
+                <p style="font-size: 11px; margin-bottom: 8px; color: #888;">生成的订阅地址：</p>
+                <a id="sub-link" class="result-link" target="_blank"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="music-hint" id="music-hint">🎵 自动播放</div>
+    <div class="music-player">
+        <div class="music-toggle" id="music-toggle">💿</div>
+    </div>
+
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://mpimg.cn/view.php/2440be6dc8f85308d15ca1b5f77e0014.mp3" type="audio/mpeg">
+    </audio>
+
     <script>
-        // 定义配置列表数据
-        const remoteConfigs = [
-        { name: "ACL4SSR", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },{ name: "ACL4SSR_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },{ name: "ACL4SSR_BackCN", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },{ name: "ACL4SSR_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },{ name: "ACL4SSR_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },{ name: "ACL4SSR_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },{ name: "ACL4SSR_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },{ name: "ACL4SSR_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },{ name: "ACL4SSR_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },{ name: "ACL4SSR_NoAuto_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },{ name: "ACL4SSR_NoAuto_NoApple_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },{ name: "ACL4SSR_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },{ name: "ACL4SSR_Online", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },{ name: "ACL4SSR_Online_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },{ name: "ACL4SSR_Online_Full", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },{ name: "ACL4SSR_Online_Full_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },{ name: "ACL4SSR_Online_Full_Google", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },{ name: "ACL4SSR_Online_Full_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },{ name: "ACL4SSR_Online_Full_Netflix", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },{ name: "ACL4SSR_Online_Full_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },{ name: "ACL4SSR_Online_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },{ name: "ACL4SSR_Online_Mini_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },{ name: "ACL4SSR_Online_Mini_Ai", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },{ name: "ACL4SSR_Online_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },{ name: "ACL4SSR_Online_Mini_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },{ name: "ACL4SSR_Online_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },{ name: "ACL4SSR_Online_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },{ name: "ACL4SSR_Online_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },{ name: "ACL4SSR_Online_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },{ name: "ACL4SSR_Online_NoReject", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },{ name: "ACL4SSR_WithChinaIp", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },{ name: "ACL4SSR_WithChinaIp_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },{ name: "ACL4SSR_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" }
-        ];
-        
-        // 页面加载时自动填充配置
-        const configSelect = document.getElementById('configList');
-        remoteConfigs.forEach(cfg => {
-            let opt = document.createElement('option');
-            opt.value = cfg.url;
-            opt.innerHTML = cfg.name;
-            configSelect.appendChild(opt);
-        });
-        
-        function generateUrl() {
-            const rawUrl = document.getElementById('rawUrl').value.trim();
-            if (!rawUrl) return alert("请输入订阅地址");
-        
-            const baseUrl = "https://api.v1.mk/sub?";
-            const params = new URLSearchParams({
-                target: document.getElementById('target').value,
-                url: rawUrl,
-                insert: "false",
-                config: configSelect.value,
-                emoji: document.getElementById('emoji').checked,
-                list: "false",
-                udp: document.getElementById('udp').checked,
-                tfo: document.getElementById('tfo').checked,
-                scv: document.getElementById('scv').checked,
-                new_name: "true"
+        (function () {
+            const el = {
+                btn: document.getElementById("sub-generate"),
+                input: document.getElementById("sub-filepath"),
+                target: document.getElementById("sub-options"),
+                backend: document.getElementById("sub-backend"),
+                config: document.getElementById("sub-config"),
+                backendGroup: document.getElementById("custom-backend-group"),
+                configGroup: document.getElementById("custom-config-group"),
+                customBackend: document.getElementById("custom-backend"),
+                customConfig: document.getElementById("custom-config"),
+                resultBox: document.getElementById("result-container"),
+                resultLink: document.getElementById("sub-link"),
+                music: document.getElementById("bg-music"),
+                musicBtn: document.getElementById("music-toggle"),
+                musicHint: document.getElementById("music-hint")
+            };
+
+            function attemptAutoPlay() {
+                el.music.play().then(() => {
+                    el.musicBtn.classList.add("playing");
+                    el.musicHint.textContent = '🎵 音乐播放中';
+                }).catch(() => {
+                    el.musicHint.textContent = '🎵 点击唱片播放';
+                });
+            }
+            attemptAutoPlay();
+
+            const enableMusicOnFirstInteraction = () => {
+                if (el.music.paused) {
+                    el.music.play().then(() => {
+                        el.musicBtn.classList.add("playing");
+                        el.musicHint.textContent = '🎵 音乐播放中';
+                    }).catch(e => console.warn("play failed:", e));
+                }
+                document.removeEventListener('click', enableMusicOnFirstInteraction);
+                document.removeEventListener('touchstart', enableMusicOnFirstInteraction);
+            };
+            if (el.music.paused) {
+                document.addEventListener('click', enableMusicOnFirstInteraction, { once: true });
+                document.addEventListener('touchstart', enableMusicOnFirstInteraction, { once: true });
+            }
+
+            el.musicBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (el.music.paused) {
+                    el.music.play().then(() => {
+                        el.musicBtn.classList.add("playing");
+                        el.musicHint.textContent = '🎵 音乐播放中';
+                    }).catch(() => alert("无法播放音频"));
+                } else {
+                    el.music.pause();
+                    el.musicBtn.classList.remove("playing");
+                    el.musicHint.textContent = '🎵 已暂停';
+                }
             });
-        
-            document.getElementById('result-url').innerText = baseUrl + params.toString();
-            document.getElementById('result-container').style.display = 'block';
-        }
-        
-        function copyUrl() {
-            const text = document.getElementById('result-url').innerText;
-            navigator.clipboard.writeText(text).then(() => alert("复制成功！"));
-        }
+
+            document.querySelector('.avatar').addEventListener('click', () => {
+                if (el.music.paused) {
+                    el.music.play().then(() => {
+                        el.musicBtn.classList.add("playing");
+                        el.musicHint.textContent = '🎵 音乐播放中';
+                    }).catch(() => { });
+                } else {
+                    el.music.pause();
+                    el.musicBtn.classList.remove("playing");
+                    el.musicHint.textContent = '🎵 已暂停';
+                }
+            });
+
+            const configPresets = {
+                clash: [
+                    { name: "ACL4SSR", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "ACL4SSR_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "ACL4SSR_BackCN", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "ACL4SSR_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "ACL4SSR_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_Online", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "ACL4SSR_Online_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "ACL4SSR_Online_Full_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full_Google", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "ACL4SSR_Online_Full_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Full_Netflix", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "ACL4SSR_Online_Full_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "ACL4SSR_Online_Mini_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Mini_Ai", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "ACL4SSR_Online_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_NoReject", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "ACL4SSR_WithChinaIp", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "ACL4SSR_WithChinaIp_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "ACL4SSR_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+                ],
+                singbox: [
+                    { name: "ACL4SSR", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "ACL4SSR_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "ACL4SSR_BackCN", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "ACL4SSR_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "ACL4SSR_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_Online", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "ACL4SSR_Online_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "ACL4SSR_Online_Full_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full_Google", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "ACL4SSR_Online_Full_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Full_Netflix", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "ACL4SSR_Online_Full_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "ACL4SSR_Online_Mini_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Mini_Ai", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "ACL4SSR_Online_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_NoReject", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "ACL4SSR_WithChinaIp", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "ACL4SSR_WithChinaIp_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "ACL4SSR_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },],
+                quanx: [
+                    { name: "ACL4SSR", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "ACL4SSR_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "ACL4SSR_BackCN", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "ACL4SSR_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "ACL4SSR_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_Online", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "ACL4SSR_Online_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "ACL4SSR_Online_Full_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full_Google", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "ACL4SSR_Online_Full_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Full_Netflix", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "ACL4SSR_Online_Full_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "ACL4SSR_Online_Mini_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Mini_Ai", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "ACL4SSR_Online_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_NoReject", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "ACL4SSR_WithChinaIp", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "ACL4SSR_WithChinaIp_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "ACL4SSR_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },],
+                loon: [
+                    { name: "ACL4SSR", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "ACL4SSR_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "ACL4SSR_BackCN", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "ACL4SSR_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "ACL4SSR_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_Online", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "ACL4SSR_Online_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "ACL4SSR_Online_Full_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full_Google", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "ACL4SSR_Online_Full_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Full_Netflix", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "ACL4SSR_Online_Full_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "ACL4SSR_Online_Mini_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Mini_Ai", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "ACL4SSR_Online_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_NoReject", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "ACL4SSR_WithChinaIp", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "ACL4SSR_WithChinaIp_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "ACL4SSR_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+                ],
+                surge: [
+                    { name: "ACL4SSR", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "ACL4SSR_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "ACL4SSR_BackCN", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "ACL4SSR_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "ACL4SSR_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_Online", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "ACL4SSR_Online_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "ACL4SSR_Online_Full_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full_Google", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "ACL4SSR_Online_Full_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Full_Netflix", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "ACL4SSR_Online_Full_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "ACL4SSR_Online_Mini_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Mini_Ai", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "ACL4SSR_Online_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_NoReject", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "ACL4SSR_WithChinaIp", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "ACL4SSR_WithChinaIp_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "ACL4SSR_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+                ],
+                surfboard: [
+                    { name: "ACL4SSR", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "ACL4SSR_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "ACL4SSR_BackCN", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "ACL4SSR_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "ACL4SSR_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "ACL4SSR_NoAuto_NoApple_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_NoMicrosoft", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "ACL4SSR_Online", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "ACL4SSR_Online_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "ACL4SSR_Online_Full_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Full_Google", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "ACL4SSR_Online_Full_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Full_Netflix", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "ACL4SSR_Online_Full_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_Mini", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "ACL4SSR_Online_Mini_AdblockPlus", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "ACL4SSR_Online_Mini_Ai", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "ACL4SSR_Online_Mini_Fallback", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_Mini_MultiMode", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "ACL4SSR_Online_Mini_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_MultiCountry", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "ACL4SSR_Online_NoAuto", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "ACL4SSR_Online_NoReject", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "ACL4SSR_WithChinaIp", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "ACL4SSR_WithChinaIp_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "ACL4SSR_WithGFW", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+                ],
+                v2ray: [
+                    { name: "📡 V2Ray (无需规则)", url: "" },
+                ]
+            };
+
+            function getAllPresets(type) {
+                let base = configPresets[type] || [];
+                if (!base.some(item => item.url === "custom")) {
+                    base.push({ name: "🔧 自定义规则链接", url: "custom" });
+                }
+                return base;
+            }
+
+            function updateConfigOptions() {
+                const targetType = el.target.value;
+                let simpleType = targetType;
+                if (targetType.startsWith('surge')) simpleType = 'surge';
+                else if (targetType.startsWith('singbox')) simpleType = 'singbox';
+
+                const presetList = getAllPresets(simpleType);
+                const seen = new Set();
+                const uniquePresets = presetList.filter(opt => {
+                    if (seen.has(opt.url)) return false;
+                    seen.add(opt.url);
+                    return true;
+                });
+
+                el.config.innerHTML = uniquePresets.map(opt => `<option value="${opt.url}">${opt.name}</option>`).join('');
+                el.configGroup.classList.toggle("hidden", el.config.value !== "custom");
+            }
+
+            el.target.addEventListener("change", updateConfigOptions);
+
+            el.backend.addEventListener("change", () => {
+                el.backendGroup.classList.toggle("hidden", el.backend.value !== "custom");
+            });
+
+            el.config.addEventListener("change", () => {
+                el.configGroup.classList.toggle("hidden", el.config.value !== "custom");
+            });
+
+            el.btn.addEventListener("click", () => {
+                const rawLines = el.input.value.trim().split('\n').filter(l => l.trim() !== '');
+                if (rawLines.length === 0) return alert("请粘贴订阅链接");
+
+                const rawUrl = rawLines.join('|');
+                let backend = el.backend.value === "custom" ? el.customBackend.value.trim() : el.backend.value;
+                if (!backend) return alert("后端地址不能为空");
+                if (!backend.includes('?')) backend += '?';
+
+                let config = el.config.value === "custom" ? el.customConfig.value.trim() : el.config.value;
+                let finalUrl = `${backend}target=${encodeURIComponent(el.target.value)}&url=${encodeURIComponent(rawUrl)}`;
+
+                if (config) {
+                    finalUrl += `&config=${encodeURIComponent(config)}`;
+                }
+
+                if (el.target.value.includes('clash') || el.target.value === 'clash') {
+                    finalUrl += `&emoji=true&list=false&udp=true&scv=true&new_name=true`;
+                }
+                if (el.target.value.includes('singbox')) {
+                    finalUrl += `&emoji=true&scv=true&new_name=true`;
+                }
+                if (el.target.value === 'quanx') {
+                    finalUrl += `&emoji=true&scv=true`;
+                }
+
+                el.resultLink.href = finalUrl;
+                el.resultLink.textContent = finalUrl;
+                el.resultBox.classList.remove("hidden");
+
+                navigator.clipboard.writeText(finalUrl).then(() => {
+                    alert("✅ 转换链接已复制！");
+                }).catch(() => {
+                    alert("⚠️ 链接已生成，请手动复制。");
+                });
+            });
+
+            updateConfigOptions();
+            el.backendGroup.classList.add("hidden");
+            if (el.config.value === "custom") el.configGroup.classList.remove("hidden");
+        })();
     </script>
 </body>
 
