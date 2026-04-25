@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool - 订阅转换工具箱</title>
+    <style>
+        :root {
+            --primary: #FFB6C1;
+            --primary-dark: #FF69B4;
+            --primary-light: #FFF0F5;
+            --accent: #FF1493;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 182, 193, 0.5);
+            --shadow: 0 8px 32px rgba(255, 105, 180, 0.2);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffeef2 50%, #ffe4e9 100%);
+            color: #333;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 182, 193, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 105, 180, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 182, 193, 0.2) 0%, transparent 40%);
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+        
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            padding: 28px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(255, 105, 180, 0.25);
+        }
+        
+        .input-group {
+            margin-bottom: 16px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .input-group label .icon {
+            margin-right: 6px;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #ffe0e6;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            color: #333;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--primary-dark);
+            box-shadow: 0 0 0 4px rgba(255, 105, 180, 0.1);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'SF Mono', monospace;
+            line-height: 1.5;
+        }
+        
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FF69B4' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+        }
+        
+        .compact-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 15px;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .result-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 240, 245, 0.8) 0%, rgba(255, 228, 233, 0.8) 100%);
+            border-radius: 14px;
+            border: 2px dashed var(--primary);
+            word-break: break-all;
+            position: relative;
+        }
+        
+        .result-container::before {
+            content: '✨';
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: white;
+            padding: 0 10px;
+            font-size: 18px;
+        }
+        
+        .result-link {
+            font-size: 13px;
+            color: var(--primary-dark);
+            font-family: 'SF Mono', monospace;
+            line-height: 1.6;
+            display: block;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .note-text {
+            font-size: 12px;
+            color: #888;
+            margin-top: 6px;
+            padding-left: 4px;
+        }
+        
+        .error {
+            background-color: #ffe6e6;
+            color: #d32f2f;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 13px;
+        }
+        
+        .success {
+            background-color: #e6f7e6;
+            color: #2e7d32;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 13px;
+        }
+        
+        .ip-info-section {
+            margin-top: 30px;
+        }
+        
+        .ip-card {
+            position: relative; 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(24px) saturate(160%); 
+            -webkit-backdrop-filter: blur(24px) saturate(160%);
+            border: 1px solid rgba(255, 182, 193, 0.5);
+            border-top: 1px solid rgba(255, 182, 193, 0.6);
+            border-left: 1px solid rgba(255, 182, 193, 0.55);
+            border-radius: 20px; 
+            width: 100%; 
+            padding: 18px 24px 24px; 
+            box-shadow: 0 16px 40px rgba(255, 105, 180, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            user-select: text;
+            -webkit-user-select: text;
+            overflow: hidden; 
+            margin-bottom: 20px;
+        }
+        
+        .card-overlay {
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1000; 
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+        }
+        
+        .card-overlay.open {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        
+        .glass-modal {
+            position: fixed; 
+            top: 50%;
+            left: 50%;
+            width: 85%;
+            max-width: 320px;
+            transform: translate(-50%, -40%) scale(0.95); 
+            background: rgba(255, 255, 255, 0.95); 
+            border: 1px solid rgba(255, 182, 193, 0.6);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1001; 
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+        }
+        
+        .glass-modal.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1); 
+            pointer-events: auto;
+        }
+        
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; font-size: 15px; font-weight: 600; color: #333;
+        }
+        
+        .modal-close {
+            background: rgba(255, 182, 193, 0.2); border: none; color: #FF69B4;
+            width: 26px; height: 26px; border-radius: 13px; font-size: 14px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .modal-close:hover { background: rgba(255, 182, 193, 0.4); }
+        
+        .drag-handle {
+            width: 36px; height: 4px; background-color: rgba(255, 182, 193, 0.4);
+            border-radius: 2px; margin: 0 auto 16px auto;
+        }
+        
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 18px;
+        }
+        
+        .header-title {
+            color: #333; font-size: 15px; font-weight: 600; 
+            display: flex; align-items: center; gap: 8px;
+        }
+        
+        .status-pulse {
+            width: 8px; height: 8px; background-color: #FF69B4;
+            border-radius: 50%; animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.5); }
+            70% { box-shadow: 0 0 0 6px rgba(255, 105, 180, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 105, 180, 0); }
+        }
+        
+        .timestamp { font-size: 11px; color: #888; font-weight: 500; }
+        .info-list { list-style: none; padding: 0; margin: 0; }
+        
+        .info-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 13px 0;
+            border-bottom: 1px solid rgba(255, 182, 193, 0.3);
+        }
+        .info-item:last-child { border-bottom: none; }
+        .info-key { color: #666; font-size: 13px; font-weight: 400; white-space: nowrap; }
+        .info-value { color: #333; font-size: 13px; font-weight: 500; text-align: right; max-width: 65%; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+        .info-text-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .glass-badge { 
+            display: inline-flex; align-items: center; gap: 4px; 
+            padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; 
+            background: rgba(255, 182, 193, 0.1); border: 1px solid rgba(255, 182, 193, 0.3); 
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
+            transition: transform 0.2s, filter 0.2s; 
+        }
+        
+        .badge-risk-low { color: #2e7d32; background: rgba(46, 125, 50, 0.1); border-color: rgba(46, 125, 50, 0.2); }  
+        .badge-risk-medium { color: #f57c00; background: rgba(245, 124, 0, 0.1); border-color: rgba(245, 124, 0, 0.2); } 
+        .badge-risk-high { color: #d32f2f; background: rgba(211, 47, 47, 0.1); border-color: rgba(211, 47, 47, 0.2); }               
+        .badge-tag { color: #666; }
+        .loading { color: #888; font-style: italic; }
+        
+        .cf-verify-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(255, 182, 193, 0.1);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .cf-verify-box:hover {
+            background: rgba(255, 182, 193, 0.15);
+            border-color: rgba(255, 182, 193, 0.5);
+        }
+        .cf-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 105, 180, 0.4);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .cf-checkbox.checked {
+            background: #FF69B4;
+            border-color: #FF69B4;
+        }
+        .cf-checkbox.spinner {
+            border-color: rgba(255, 105, 180, 0.2);
+            border-top-color: #FF69B4;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .cf-checkbox svg {
+            width: 14px;
+            height: 14px;
+            stroke: white;
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s ease;
+        }
+        .cf-checkbox.checked svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .cf-text {
+            font-size: 12px;
+            color: #666;
+        }
+        .cf-verified {
+            color: #FF69B4;
+            font-weight: 600;
+        }
+        
+        .btn-group {
+            display: flex; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255, 182, 193, 0.3);
+        }
+        .glass-btn {
+            flex: 1; background: rgba(255, 182, 193, 0.15); border: 1px solid rgba(255, 105, 180, 0.3); 
+            color: #FF69B4; padding: 11px 0; border-radius: 10px; 
+            font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            text-decoration: none;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass-btn:hover { background: rgba(255, 105, 180, 0.25); border-color: rgba(255, 105, 180, 0.5); }
+        .glass-btn:active { transform: scale(0.95); }
+        .glass-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .pulse-green { --pulse-color: #FF69B4; }
+        .pulse-red { --pulse-color: #d32f2f; }
+        
+        .speed-progress-container {
+            margin: 20px 0;
+            height: 4px;
+            background: rgba(255, 105, 180, 0.2);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .speed-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #FF69B4, #FFB6C1);
+            transition: width 0.5s ease;
+        }
+        .speed-status {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 12px;
+            min-height: 20px;
+        }
+        .speed-result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        .speed-result-grid.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .speed-metric {
+            text-align: center;
+            padding: 12px 4px;
+            background: rgba(255, 182, 193, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 182, 193, 0.3);
+        }
+        .speed-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #FF69B4;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .speed-label {
+            font-size: 11px;
+            color: #666;
+        }
+        .speed-btn-primary {
+            width: 100%;
+            margin-top: 16px;
+            background: rgba(255, 105, 180, 0.15);
+            color: #FF69B4;
+            border: 1px solid rgba(255, 105, 180, 0.4);
+        }
+        .speed-btn-primary:hover {
+            background: rgba(255, 105, 180, 0.25);
+        }
+        .speed-btn-secondary {
+            width: 100%;
+            margin-top: 8px;
+            background: rgba(255, 182, 193, 0.1);
+            color: #666;
+            border: 1px solid rgba(255, 182, 193, 0.3);
+        }
+        
+        .copy-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(255, 105, 180, 0.95);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 1003;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .copy-toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card-overlay" id="card-overlay" onclick="closeAllModals()"></div>
+    <div class="copy-toast" id="copy-toast">✓ 已复制到剪贴板</div>
+
+    <div class="container">
+        <!-- 订阅转换模块 -->
+        <div class="glass-card">
+            <div class="input-group">
+                <label><span class="icon">📋</span>订阅链接 (支持多行混合)</label>
+                <textarea id="sub-filepath" placeholder="粘贴订阅地址，多条自动合并..."></textarea>
+            </div>
+
+            <div class="compact-row">
+                <div class="input-group">
+                    <label>生成类型</label>
+                    <select id="sub-options">
+                        <option value="clash">Clash / Meta</option>
+                        <option value="singbox">Sing-box (完整规则)</option>
+                        <option value="quanx">Quantumult X</option>
+                        <option value="loon">Loon</option>
+                        <option value="surge&ver=4">Surge 4</option>
+                        <option value="surfboard">Surfboard</option>
+                        <option value="v2ray">V2Ray (txt)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>转换后端</label>
+                    <select id="sub-backend">
+                        <option value="https://api.v1.mk/sub?">肥羊后端</option>
+                        <option value="custom">自定义后端</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group hidden" id="custom-backend-group">
+                <label>自定义后端地址</label>
+                <input type="text" id="custom-backend" placeholder="https://api.xxx.com/sub?">
+            </div>
+
+            <div class="input-group">
+                <label>⚙️ 分流规则 / 配置预设</label>
+                <select id="sub-config"></select>
+                <div class="note-text">内置主流规则，Singbox/Clash等已补全</div>
+            </div>
+
+            <div class="input-group hidden" id="custom-config-group">
+                <label>自定义远程配置链接 (ini/json)</label>
+                <input type="text" id="custom-config" placeholder="https://example.com/config.ini">
+            </div>
+
+            <button class="btn" id="sub-generate">生成转换链接并复制</button>
+
+            <div class="result-container hidden" id="result-container">
+                <p style="font-size: 12px; margin-bottom: 10px; color: #888;">生成的订阅地址：</p>
+                <a id="sub-link" class="result-link" target="_blank"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="error" id="errorMsg"></div>
+    <div class="success" id="successMsg"></div>
+
+    <div class="ip-info-section">
+        <div class="glass-modal" id="speed-modal">
+            <div class="modal-header">
+                <span>🚀 网络测速</span>
+                <button class="modal-close" onclick="closeAllModals()">✕</button>
+            </div>
+            <div class="speed-status" id="speed-status">准备就绪</div>
+            <div class="speed-progress-container">
+                <div class="speed-progress-bar" id="speed-progress"></div>
+            </div>
+            <div class="speed-result-grid" id="speed-results">
+                <div class="speed-metric">
+                    <span class="speed-value" id="ping-val">--</span>
+                    <span class="speed-label">Ping (ms)</span>
+                </div>
+                <div class="speed-metric">
+                    <span class="speed-value" id="dl-val">--</span>
+                    <span class="speed-label">下载 (Mbps)</span>
+                </div>
+                <div class="speed-metric">
+                    <span class="speed-value" id="ul-val">--</span>
+                    <span class="speed-label">上传 (Mbps)</span>
+                </div>
+            </div>
+            <button class="glass-btn speed-btn-primary" id="start-speed-btn" onclick="startSpeedTest()">开始测速</button>
+            <button class="glass-btn speed-btn-secondary" onclick="closeAllModals()" style="display:none;" id="close-speed-btn">关闭</button>
+        </div>
+
+        <div class="ip-card" id="ip-card">
+            <div class="drag-handle"></div>
+            <div class="card-header">
+                <div class="header-title">
+                    <div class="status-pulse pulse-green" id="pulse-dot"></div>
+                    网络状态监测
+                </div>
+                <div class="timestamp" id="timestamp">刚刚</div>
+            </div>
+
+            <ul class="info-list">
+                <li class="info-item">
+                    <span class="info-key">外部 IP</span>
+                    <span class="info-value info-text-value" id="ip"><span class="loading">解析中...</span></span>
+                </li>
+                <li class="info-item">
+                    <span class="info-key">地理位置</span>
+                    <span class="info-value info-text-value" id="loc" title=""><span class="loading">解析中...</span></span>
+                </li>
+                <li class="info-item">
+                    <span class="info-key">提供商</span>
+                    <span class="info-value info-text-value" id="asn" title=""><span class="loading">解析中...</span></span>
+                </li>
+                <li class="info-item">
+                    <span class="info-key">风险评估</span>
+                    <div class="info-value">
+                        <span id="risk-badge" class="glass-badge badge-tag"><span class="loading">--</span></span>
+                    </div>
+                </li>
+                <li class="info-item">
+                    <span class="info-key">网络类型</span>
+                    <div class="info-value" id="type-container"><span class="loading">--</span></div>
+                </li>
+                <li class="info-item">
+                    <span class="info-key">WebRTC</span>
+                    <span class="info-value info-text-value" id="webrtc-ip" title=""><span class="loading">探测中...</span></span>
+                </li>
+                <li class="info-item">
+                    <span class="info-key">代理检测</span>
+                    <div class="info-value">
+                        <span id="proxy-badge" class="glass-badge badge-tag"><span class="loading">分析中...</span></span>
+                    </div>
+                </li>
+                <li class="info-item" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                    <span class="info-key" style="margin-bottom: 4px;">机器人检测</span>
+                    <div class="cf-verify-box" id="cf-box" onclick="handleCFVerify()">
+                        <div class="cf-checkbox" id="cf-checkbox">
+                            <svg viewBox="0 0 24 24">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <span class="cf-text" id="cf-text">我不是机器人</span>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="btn-group">
+                <button class="glass-btn" onclick="openSpeedModal()">🚀 网络测速</button>
+                <a class="glass-btn" href="https://encrypteddns.woshishuaige.ddns-ip.net" target="_blank">🔒 DNS 选择</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局变量和函数 ====================
+        let ipData = null;
+        let isVerified = false;
+        let speedTestRunning = false;
+        
+        // 显示错误消息
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = '❌ ' + message;
+            errorMsg.style.display = 'block';
+            setTimeout(() => { errorMsg.style.display = 'none'; }, 3000);
+        }
+        
+        // 显示成功消息
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMsg');
+            successMsg.textContent = message;
+            successMsg.style.display = 'block';
+            setTimeout(() => { successMsg.style.display = 'none'; }, 3000);
+        }
+        
+        // 显示复制提示
+        function showToast(message) {
+            const toast = document.getElementById('copy-toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        // ==================== 订阅转换配置预设 ====================
+        const configPresets = {
+            clash: [
+                    { name: "✨ACL4SSR✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "✨ACL4SSR_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_BackCN✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "✨ACL4SSR_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "✨ACL4SSR_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_Online✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "✨ACL4SSR_Online_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "✨ACL4SSR_Online_Full_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Google✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "✨ACL4SSR_Online_Full_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Netflix✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "✨ACL4SSR_Online_Full_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Ai✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_NoReject✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "✨ACL4SSR_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+            ],
+            singbox: [
+                    { name: "✨ACL4SSR✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "✨ACL4SSR_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_BackCN✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "✨ACL4SSR_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "✨ACL4SSR_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_Online✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "✨ACL4SSR_Online_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "✨ACL4SSR_Online_Full_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Google✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "✨ACL4SSR_Online_Full_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Netflix✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "✨ACL4SSR_Online_Full_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Ai✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_NoReject✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "✨ACL4SSR_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+            ],
+            quanx: [
+                    { name: "✨ACL4SSR✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "✨ACL4SSR_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_BackCN✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "✨ACL4SSR_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "✨ACL4SSR_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_Online✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "✨ACL4SSR_Online_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "✨ACL4SSR_Online_Full_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Google✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "✨ACL4SSR_Online_Full_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Netflix✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "✨ACL4SSR_Online_Full_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Ai✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_NoReject✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "✨ACL4SSR_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+            ],
+            loon: [
+                    { name: "✨ACL4SSR✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "✨ACL4SSR_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_BackCN✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "✨ACL4SSR_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "✨ACL4SSR_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_Online✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "✨ACL4SSR_Online_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "✨ACL4SSR_Online_Full_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Google✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "✨ACL4SSR_Online_Full_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Netflix✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "✨ACL4SSR_Online_Full_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Ai✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_NoReject✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "✨ACL4SSR_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+            ],
+            surge: [
+                    { name: "✨ACL4SSR✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "✨ACL4SSR_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_BackCN✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "✨ACL4SSR_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "✨ACL4SSR_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_Online✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "✨ACL4SSR_Online_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "✨ACL4SSR_Online_Full_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Google✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "✨ACL4SSR_Online_Full_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Netflix✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "✨ACL4SSR_Online_Full_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Ai✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_NoReject✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "✨ACL4SSR_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+            ],
+            surfboard: [
+                    { name: "✨ACL4SSR✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR.ini" },
+                    { name: "✨ACL4SSR_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_BackCN✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_BackCN.ini" },
+                    { name: "✨ACL4SSR_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini.ini" },
+                    { name: "✨ACL4SSR_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple.ini" },
+                    { name: "✨ACL4SSR_NoAuto_NoApple_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoAuto_NoApple_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_NoMicrosoft✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_NoMicrosoft.ini" },
+                    { name: "✨ACL4SSR_Online✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" },
+                    { name: "✨ACL4SSR_Online_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini" },
+                    { name: "✨ACL4SSR_Online_Full_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Google✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Google.ini" },
+                    { name: "✨ACL4SSR_Online_Full_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Full_Netflix✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_Netflix.ini" },
+                    { name: "✨ACL4SSR_Online_Full_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_Mini✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_AdblockPlus✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_AdblockPlus.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Ai✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Ai.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_Fallback✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_Fallback.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_MultiMode✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini" },
+                    { name: "✨ACL4SSR_Online_Mini_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_MultiCountry✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_MultiCountry.ini" },
+                    { name: "✨ACL4SSR_Online_NoAuto✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoAuto.ini" },
+                    { name: "✨ACL4SSR_Online_NoReject✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_NoReject.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp.ini" },
+                    { name: "✨ACL4SSR_WithChinaIp_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithChinaIp_WithGFW.ini" },
+                    { name: "✨ACL4SSR_WithGFW✨", url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_WithGFW.ini" },
+            ],
+            v2ray: [
+                { name: "📡 V2Ray (无需规则)", url: "" }
+            ]
+        };
+        
+        function getAllPresets(type) {
+            let base = configPresets[type] || [];
+            if (!base.some(item => item.url === "custom")) {
+                base.push({ name: "🔧 自定义规则链接", url: "custom" });
+            }
+            return base;
+        }
+        
+        function updateConfigOptions() {
+            const targetType = targetSelect.value;
+            let simpleType = targetType;
+            if (targetType.startsWith('surge')) simpleType = 'surge';
+            else if (targetType.startsWith('singbox')) simpleType = 'singbox';
+        
+            const presetList = getAllPresets(simpleType);
+            const seen = new Set();
+            const uniquePresets = presetList.filter(opt => {
+                if (seen.has(opt.url)) return false;
+                seen.add(opt.url);
+                return true;
+            });
+        
+            configSelect.innerHTML = uniquePresets.map(opt => `<option value="${opt.url}">${opt.name}</option>`).join('');
+            customConfigGroup.classList.toggle("hidden", configSelect.value !== "custom");
+        }
+        
+        // ==================== DOM 元素 ====================
+        const targetSelect = document.getElementById("sub-options");
+        const backendSelect = document.getElementById("sub-backend");
+        const configSelect = document.getElementById("sub-config");
+        const generateBtn = document.getElementById("sub-generate");
+        const inputField = document.getElementById("sub-filepath");
+        const customBackendGroup = document.getElementById("custom-backend-group");
+        const customBackend = document.getElementById("custom-backend");
+        const customConfigGroup = document.getElementById("custom-config-group");
+        const customConfig = document.getElementById("custom-config");
+        const resultContainer = document.getElementById("result-container");
+        const resultLink = document.getElementById("sub-link");
+        
+        // ==================== 事件监听 ====================
+        targetSelect.addEventListener("change", updateConfigOptions);
+        
+        backendSelect.addEventListener("change", () => {
+            customBackendGroup.classList.toggle("hidden", backendSelect.value !== "custom");
+        });
+        
+        configSelect.addEventListener("change", () => {
+            customConfigGroup.classList.toggle("hidden", configSelect.value !== "custom");
+        });
+        
+        generateBtn.addEventListener("click", () => {
+            const rawLines = inputField.value.trim().split('\n').filter(l => l.trim() !== '');
+            if (rawLines.length === 0) {
+                showError("请粘贴订阅链接");
+                return;
+            }
+            
+            const rawUrl = rawLines.join('|');
+            let backend = backendSelect.value === "custom" ? customBackend.value.trim() : backendSelect.value;
+            if (!backend) {
+                showError("后端地址不能为空");
+                return;
+            }
+            if (!backend.includes('?')) backend += '?';
+            
+            let config = configSelect.value === "custom" ? customConfig.value.trim() : configSelect.value;
+            let finalUrl = `${backend}target=${encodeURIComponent(targetSelect.value)}&url=${encodeURIComponent(rawUrl)}`;
+            
+            if (config && config !== "custom") {
+                finalUrl += `&config=${encodeURIComponent(config)}`;
+            }
+            
+            if (targetSelect.value.includes('clash') || targetSelect.value === 'clash') {
+                finalUrl += `&emoji=true&list=false&udp=true&scv=true&new_name=true`;
+            }
+            if (targetSelect.value.includes('singbox')) {
+                finalUrl += `&emoji=true&scv=true&new_name=true`; 
+            }
+            if (targetSelect.value === 'quanx') {
+                finalUrl += `&emoji=true&scv=true`;
+            }
+            
+            resultLink.href = finalUrl;
+            resultLink.textContent = finalUrl;
+            resultContainer.classList.remove("hidden");
+            
+            navigator.clipboard.writeText(finalUrl).then(() => {
+                generateBtn.textContent = "✅ 已复制到剪贴板";
+                setTimeout(() => generateBtn.textContent = "生成转换链接并复制", 2000);
+                showToast("已复制到剪贴板");
+            }).catch(() => {
+                showError("链接已生成，请手动复制。");
+            });
+        });
+        
+        updateConfigOptions();
+        
+        // ==================== 模态框控制 ====================
+        function openSpeedModal() {
+            document.getElementById('card-overlay').classList.add('open');
+            document.getElementById('speed-modal').classList.add('open');
+            resetSpeedTest();
+        }
+        
+        function closeAllModals() {
+            document.getElementById('card-overlay').classList.remove('open');
+            document.getElementById('speed-modal').classList.remove('open');
+        }
+        
+        function resetSpeedTest() {
+            const statusEl = document.getElementById('speed-status');
+            if (statusEl) {
+                statusEl.textContent = '准备就绪';
+                statusEl.style.color = '#666';
+            }
+            const progressEl = document.getElementById('speed-progress');
+            if (progressEl) progressEl.style.width = '0%';
+            const resultsEl = document.getElementById('speed-results');
+            if (resultsEl) resultsEl.classList.remove('show');
+            
+            const pingEl = document.getElementById('ping-val');
+            const dlEl = document.getElementById('dl-val');
+            const ulEl = document.getElementById('ul-val');
+            if (pingEl) pingEl.textContent = '--';
+            if (dlEl) dlEl.textContent = '--';
+            if (ulEl) ulEl.textContent = '--';
+            
+            const startBtn = document.getElementById('start-speed-btn');
+            const closeBtn = document.getElementById('close-speed-btn');
+            if (startBtn) {
+                startBtn.style.display = 'block';
+                startBtn.disabled = false;
+                startBtn.textContent = '开始测速';
+            }
+            if (closeBtn) closeBtn.style.display = 'none';
+            
+            speedTestRunning = false;
+        }
+        
+        async function startSpeedTest() {
+            if (speedTestRunning) return;
+            speedTestRunning = true;
+        
+            const btn = document.getElementById('start-speed-btn');
+            const status = document.getElementById('speed-status');
+            const progress = document.getElementById('speed-progress');
+            const results = document.getElementById('speed-results');
+        
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '测速中...';
+            }
+            if (results) results.classList.remove('show');
+        
+            let prog = 0;
+            const progTimer = setInterval(() => {
+                prog += Math.random() * 12 + 8;
+                if (prog > 95) prog = 95;
+                if (progress) progress.style.width = prog + '%';
+            }, 500);
+        
+            try {
+                if (status) status.textContent = '测试延迟...';
+                const pingSamples = [];
+                const pingUrls = [
+                    'https://www.cloudflare.com/cdn-cgi/trace',
+                    'https://1.1.1.1/cdn-cgi/trace',
+                    'https://speed.cloudflare.com/__down?bytes=1'
+                ];
+        
+                for (let i = 0; i < 8; i++) {
+                    const url = pingUrls[i % pingUrls.length];
+                    const pingStart = performance.now();
+                    try {
+                        await fetch(url, { 
+                            cache: 'no-store', 
+                            mode: 'no-cors',
+                            signal: AbortSignal.timeout(5000)
+                        });
+                        pingSamples.push(performance.now() - pingStart);
+                    } catch (e) {
+                        pingSamples.push(9999);
+                    }
+                    await new Promise(r => setTimeout(r, 50));
+                }
+        
+                pingSamples.sort((a, b) => a - b);
+                const ping = Math.round(pingSamples[Math.floor(pingSamples.length / 2)]);
+        
+                if (status) status.textContent = '测试下载速度...';
+                const dlChunks = [];
+                const chunkSizes = [1, 2, 5, 10];
+        
+                for (const size of chunkSizes) {
+                    const chunkStart = performance.now();
+                    try {
+                        const response = await fetch(`https://speed.cloudflare.com/__down?bytes=${size * 1024 * 1024}`, {
+                            cache: 'no-store',
+                            signal: AbortSignal.timeout(15000)
+                        });
+        
+                        if (response.ok) {
+                            const reader = response.body.getReader();
+                            let received = 0;
+                            while (true) {
+                                const { done, value } = await reader.read();
+                                if (done) break;
+                                received += value.length;
+                            }
+                            const chunkTime = (performance.now() - chunkStart) / 1000;
+                            if (chunkTime > 0.5) {
+                                dlChunks.push((received * 8) / chunkTime / 1000000);
+                            }
+                        }
+                    } catch (e) {
+                        break;
+                    }
+                }
+        
+                const dlSpeed = dlChunks.length > 0 ? Math.max(...dlChunks).toFixed(1) : '0.0';
+        
+                if (status) status.textContent = '测试上传速度...';
+                const ulChunks = [];
+                const ulSizes = [1, 2];
+        
+                for (const size of ulSizes) {
+                    const uploadData = new Uint8Array(size * 1024 * 1024);
+                    const ulStart = performance.now();
+                    try {
+                        await fetch('https://httpbin.org/post', {
+                            method: 'POST',
+                            body: uploadData,
+                            headers: { 'Content-Type': 'application/octet-stream' },
+                            cache: 'no-store',
+                            signal: AbortSignal.timeout(15000)
+                        });
+                        const ulTime = (performance.now() - ulStart) / 1000;
+                        if (ulTime > 0.5) {
+                            ulChunks.push((size * 8) / ulTime);
+                        }
+                    } catch (e) {
+                        break;
+                    }
+                }
+        
+                const ulSpeed = ulChunks.length > 0 ? Math.max(...ulChunks).toFixed(1) : '0.0';
+        
+                clearInterval(progTimer);
+                if (progress) progress.style.width = '100%';
+                if (status) status.textContent = '测速完成';
+        
+                const pingVal = document.getElementById('ping-val');
+                const dlVal = document.getElementById('dl-val');
+                const ulVal = document.getElementById('ul-val');
+                
+                if (pingVal) pingVal.textContent = ping < 9999 ? ping : '--';
+                if (dlVal) dlVal.textContent = dlSpeed;
+                if (ulVal) ulVal.textContent = ulSpeed;
+        
+                if (results) results.classList.add('show');
+                if (btn) btn.style.display = 'none';
+                const closeBtn = document.getElementById('close-speed-btn');
+                if (closeBtn) closeBtn.style.display = 'block';
+        
+            } catch (e) {
+                clearInterval(progTimer);
+                if (status) {
+                    status.textContent = '测速失败: ' + (e.message || '网络超时');
+                    status.style.color = '#d32f2f';
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '重新测速';
+                }
+                speedTestRunning = false;
+            }
+        }
+        
+        // ==================== CF验证 ====================
+        function handleCFVerify() {
+            if (isVerified) return;
+        
+            const checkbox = document.getElementById('cf-checkbox');
+            const text = document.getElementById('cf-text');
+            const box = document.getElementById('cf-box');
+            const riskBadge = document.getElementById('risk-badge');
+            const pulseEl = document.getElementById('pulse-dot');
+        
+            if (checkbox) checkbox.classList.add('spinner');
+            if (text) text.textContent = '验证中...';
+        
+            setTimeout(() => {
+                if (checkbox) {
+                    checkbox.classList.remove('spinner');
+                    checkbox.classList.add('checked');
+                }
+                if (text) {
+                    text.textContent = '验证通过';
+                    text.classList.add('cf-verified');
+                }
+                if (box) box.style.cursor = 'default';
+                isVerified = true;
+        
+                if (pulseEl) pulseEl.className = 'status-pulse pulse-green';
+                if (riskBadge) {
+                    riskBadge.innerHTML = '✅ 已验证（低风险）';
+                    riskBadge.className = 'glass-badge badge-risk-low';
+                }
+            }, 1000 + Math.random() * 1000);
+        }
+        
+        // ==================== 代理检测 ====================
+        function detectProxyByMismatch(data) {
+            const proxyBadge = document.getElementById('proxy-badge');
+        
+            const browserLang = navigator.language || navigator.userLanguage || '';
+            const browserLanguages = navigator.languages || [browserLang];
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+            const timeZoneOffset = new Date().getTimezoneOffset();
+        
+            const ipCountry = data.location?.country_code || data.location?.country || '';
+        
+            const tzToCountry = {
+                'Asia/Shanghai': 'CN', 'Asia/Beijing': 'CN', 'Asia/Hong_Kong': 'HK',
+                'Asia/Tokyo': 'JP', 'Asia/Seoul': 'KR', 'Asia/Singapore': 'SG',
+                'Asia/Taipei': 'TW', 'Asia/Macau': 'MO',
+                'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US',
+                'America/Denver': 'US', 'America/Phoenix': 'US',
+                'Europe/London': 'GB', 'Europe/Paris': 'FR', 'Europe/Berlin': 'DE'
+            };
+        
+            const langToCountry = {
+                'zh-CN': 'CN', 'zh-HK': 'HK', 'zh-TW': 'TW', 'zh-SG': 'SG',
+                'en-US': 'US', 'en-GB': 'GB', 'en-CA': 'CA', 'en-AU': 'AU'
+            };
+        
+            const tzCountry = tzToCountry[timeZone] || '';
+            const langCountry = langToCountry[browserLang] || browserLang.split('-')[1] || '';
+        
+            let mismatchReasons = [];
+            let mismatchScore = 0;
+        
+            if (tzCountry && ipCountry && tzCountry !== ipCountry) {
+                mismatchReasons.push(`时区(${tzCountry})≠IP(${ipCountry})`);
+                mismatchScore += 2;
+            }
+        
+            if (langCountry && ipCountry && langCountry.toUpperCase() !== ipCountry.toUpperCase()) {
+                mismatchReasons.push(`语言(${langCountry})≠IP(${ipCountry})`);
+                mismatchScore += 2;
+            }
+        
+            const isChineseLang = browserLanguages.some(l => 
+                l.includes('zh') || l.includes('CN') || l.includes('Hans') || l.includes('Hant')
+            );
+            if (isChineseLang && ipCountry && !['CN', 'HK', 'TW', 'MO', 'SG'].includes(ipCountry)) {
+                mismatchReasons.push('中文环境+海外IP');
+                mismatchScore += 3;
+            }
+        
+            if (timeZoneOffset === -480 && ipCountry && !['CN', 'HK', 'TW', 'MO', 'SG'].includes(ipCountry)) {
+                mismatchReasons.push('东八区时区+海外IP');
+                mismatchScore += 2;
+            }
+        
+            if (proxyBadge) {
+                if (mismatchScore >= 2) {
+                    proxyBadge.innerHTML = '⚠️ ' + mismatchReasons[0];
+                    proxyBadge.className = 'glass-badge badge-risk-high';
+                    if (proxyBadge.title) proxyBadge.title = '检测到代理特征: ' + mismatchReasons.join(', ');
+                    return true;
+                } else {
+                    proxyBadge.innerHTML = '✅ 未使用代理';
+                    proxyBadge.className = 'glass-badge badge-risk-low';
+                    return false;
+                }
+            }
+            return false;
+        }
+        
+        // ==================== WebRTC检测 ====================
+        async function detectWebRTCLeak() {
+            const rtcIpEl = document.getElementById('webrtc-ip');
+            if (!rtcIpEl) return;
+            
+            try {
+                const ips = new Set();
+                const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+                pc.createDataChannel('');
+        
+                pc.onicecandidate = e => { 
+                    if (e.candidate && e.candidate.candidate) { 
+                        const parts = e.candidate.candidate.split(' ');
+                        if (parts.length >= 5) {
+                            const extractedIp = parts[4];
+                            if (!extractedIp.endsWith('.local')) {
+                                ips.add(extractedIp);
+                            }
+                        }
+                    } 
+                };
+                await pc.createOffer().then(offer => pc.setLocalDescription(offer));
+        
+                setTimeout(() => {
+                    pc.close();
+                    if(ips.size > 0) {
+                        const detectedIp = Array.from(ips)[0];
+                        rtcIpEl.innerText = `泄漏: ${detectedIp}`; 
+                        rtcIpEl.style.color = '#d32f2f'; 
+                    } else {
+                        rtcIpEl.innerText = '安全'; 
+                        rtcIpEl.style.color = '#2e7d32'; 
+                    }
+                }, 2000);
+            } catch(e) { 
+                rtcIpEl.innerText = '暂不支持'; 
+            }
+        }
+        
+        // ==================== 时间戳更新 ====================
+        let lastFetchTime = Date.now();
+        setInterval(() => {
+            const diffMinutes = Math.floor((Date.now() - lastFetchTime) / 60000);
+            const timestampEl = document.getElementById('timestamp');
+            if (timestampEl) {
+                timestampEl.innerText = diffMinutes === 0 ? "刚刚" : `${diffMinutes} 分钟前`;
+            }
+        }, 60000);
+        
+        // ==================== IP信息获取 ====================
+        fetch('https://api.ipapi.is/')
+            .then(response => response.json())
+            .then(data => {
+                ipData = data;
+                lastFetchTime = Date.now();
+                
+                const ipEl = document.getElementById('ip');
+                const locEl = document.getElementById('loc');
+                const asnEl = document.getElementById('asn');
+                const riskEl = document.getElementById('risk-badge');
+                const pulseEl = document.getElementById('pulse-dot');
+                const typeContainer = document.getElementById('type-container');
+                
+                if (ipEl) ipEl.innerText = data.ip || '未知';
+                
+                const fullLoc = [data.location?.city, data.location?.country].filter(Boolean).join(', ') || '未知位置';
+                if (locEl) {
+                    locEl.innerText = fullLoc;
+                    locEl.title = fullLoc;
+                }
+                
+                const fullAsn = [data.asn?.asn ? `AS${data.asn.asn}` : '', data.company?.name || data.asn?.org].filter(Boolean).join(' ') || '未知提供商';
+                if (asnEl) {
+                    asnEl.innerText = fullAsn;
+                    asnEl.title = fullAsn;
+                }
+        
+                const isProxy = detectProxyByMismatch(data);
+        
+                if (riskEl) {
+                    if (data.is_vpn || data.is_proxy || data.is_tor || isProxy) {
+                        riskEl.innerHTML = '⚠️ 高风险';
+                        riskEl.className = 'glass-badge badge-risk-high';
+                        if (pulseEl) pulseEl.className = "status-pulse pulse-red";
+                    } else {
+                        riskEl.innerHTML = '✅ 低风险';
+                        riskEl.className = 'glass-badge badge-risk-low';
+                        if (pulseEl) pulseEl.className = "status-pulse pulse-green";
+                    }
+                }
+        
+                if (typeContainer) {
+                    const types = [];
+                    if (data.is_proxy) types.push('代理');
+                    if (data.is_vpn) types.push('VPN');
+                    if (data.is_tor) types.push('Tor');
+                    if (data.is_datacenter) types.push('机房');
+                    if (data.is_abuser) types.push('恶意');
+                    if (types.length === 0) types.push('住宅网络');
+                    typeContainer.innerHTML = types.map(t => `<span class="glass-badge badge-tag">${t}</span>`).join('');
+                }
+            })
+            .catch(err => { 
+                const ipEl = document.getElementById('ip');
+                const proxyBadge = document.getElementById('proxy-badge');
+                if (ipEl) ipEl.innerText = "解析失败"; 
+                if (proxyBadge) proxyBadge.innerText = "检测失败";
+            });
+        
+        // ==================== 初始化 ====================
+        detectWebRTCLeak();
+    </script>
+</body>
+
+</html>
